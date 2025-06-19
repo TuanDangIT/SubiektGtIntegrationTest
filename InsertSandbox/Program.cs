@@ -33,6 +33,7 @@ namespace InsertSandbox
                 Console.WriteLine("3. Delete a document (ZK, PS, FS) by ID");
                 Console.WriteLine("4. Add product");
                 Console.WriteLine("5. Delete product by ID");
+                Console.WriteLine("6. Fulfill an order (ZK)");
                 //Console.WriteLine("6. Get customer by symbol or NIP");
                 Console.WriteLine("\"exit\". End console app");
                 var chosenAction = Console.ReadLine();
@@ -54,6 +55,9 @@ namespace InsertSandbox
                             break;
                         case "5":
                             DeleteProduct(subiekt);
+                            break;
+                        case "6":
+                            FulfillOrder(subiekt);
                             break;
                         //case "6":
                         //    FindCustomer(subiekt);
@@ -94,6 +98,9 @@ namespace InsertSandbox
 
         static void CreateSuDocument(Subiekt subiekt)
         {
+            Console.WriteLine("Enter user symbol to create a new document:");
+            string userSymbol = Console.ReadLine();
+            Uzytkownik user = subiekt.Uzytkownicy.Wczytaj(userSymbol);
             Console.WriteLine("Enter type of document");
             string inputDocumentType = Console.ReadLine();
             SubiektDokumentEnum documentType = default; //Initialize document type variable
@@ -116,6 +123,8 @@ namespace InsertSandbox
             {
                 document.Rezerwacja = true; //Set reservation for ZK document
             }
+
+            document.Wystawil = user.Identyfikator;
             //Console.WriteLine($"Enter customer symbol for the new {inputDocumentType}:");
             //var customerSymbol = Console.ReadLine();
             //Kontrahent customer = subiekt.Kontrahenci.Wczytaj(customerSymbol) ?? throw new Exception($"Customer with symbol: {customerSymbol} was not found."); //Read customer by symbol
@@ -263,6 +272,34 @@ namespace InsertSandbox
             Towar towar = subiekt.Towary.Wczytaj(productSymbol);
             towar.Usun(); // Delete the product by symbol
             Console.WriteLine($"Product with symbol '{productSymbol}' deleted successfully.");
+        }
+
+        static void FulfillOrder(Subiekt subiekt)
+        {
+            Console.WriteLine("Enter ZK's number/Id to fulfill the order:");
+            var zkId = Console.ReadLine();
+            Console.WriteLine("Enter fulfillment type of document (PA, FS):");
+            if (!Enum.TryParse(Console.ReadLine(), true, out SuDocumentFulfillmentType documentType))
+            {
+                throw new Exception($"Entered document type is invalid.");
+            }
+            SuDokument zkDocument = subiekt.Dokumenty.Wczytaj(zkId) ?? throw new Exception($"ZK with ID: {zkId} was not found.");
+            SuDokument fullfilmentDocument = null;
+            switch (documentType)
+            {
+                case SuDocumentFulfillmentType.PA:
+                    fullfilmentDocument = subiekt.SuDokumentyManager.DodajPA();
+                    break;
+                case SuDocumentFulfillmentType.FS:
+                    fullfilmentDocument = subiekt.SuDokumentyManager.DodajFS();
+                    break;
+            }
+            fullfilmentDocument.NaPodstawie(zkDocument.Identyfikator); // Set the fulfillment document based on the ZK document
+            fullfilmentDocument.DataWystawienia = DateTime.Now; // Set the issue date of the fulfillment document
+            fullfilmentDocument.PlatnoscPrzelewKwota = zkDocument.KwotaDoZaplaty;
+            fullfilmentDocument.Zapisz(); // Save the fulfillment document
+            fullfilmentDocument.Wyswietl();
+            fullfilmentDocument.Zamknij();
         }
     }
 }
