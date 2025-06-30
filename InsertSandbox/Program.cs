@@ -175,7 +175,7 @@ namespace InsertSandbox
                 {
                     break;
                 }
-                SuPozycja item = correctionFs.Pozycje.Wczytaj(symbol); //Read item by symbol
+                SuPozycjaKorekty item = correctionFs.Pozycje.Wczytaj(symbol); //Read item by symbol
                 if (item is null)
                 {
                     Console.WriteLine("Invalid item symbol.");
@@ -191,7 +191,7 @@ namespace InsertSandbox
                         Console.WriteLine("Invalid net price. Please enter a positive decimal number.");
                         continue;
                     }
-                    item.CenaNettoPrzedRabatem = newNetPrice; //Set new net price for the item
+                    item.CenaNettoPrzedRabatemPoKorekcie = newNetPrice; //Set new net price for the item
                 }
                 Console.WriteLine("Do you want to change it quantity? yes or no?");
                 var wantToChangeQuantity = Console.ReadLine().ToLower();
@@ -203,7 +203,7 @@ namespace InsertSandbox
                         Console.WriteLine("Invalid quantity. Please enter a positive integer.");
                         continue;
                     }
-                    item.IloscJm = newQuantity; //Set new quantity for the item
+                    item.IloscJmPoKorekcie = newQuantity; //Set new quantity for the item
                 }
             }
             correctionFs.Zapisz(); //Save the correction document
@@ -349,7 +349,7 @@ namespace InsertSandbox
             fullfilmentDocument.DataWystawienia = DateTime.Now; // Set the issue date of the fulfillment document
             fullfilmentDocument.PlatnoscPrzelewKwota = zkDocument.KwotaDoZaplaty;
             fullfilmentDocument.Zapisz(); // Save the fulfillment document
-            fullfilmentDocument.Wyswietl();
+            fullfilmentDocument.Wyswietl(); //Display the fulfillment document
             fullfilmentDocument.Zamknij();
         }
     }
