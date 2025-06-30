@@ -158,6 +158,57 @@ namespace InsertSandbox
             Console.WriteLine("Sales invoice added successfully.");
         }
 
+        static void CreateFsCorrection(Subiekt subiekt, string fzSymbol)
+        {
+            Console.WriteLine("Enter user symbol to create a new document:");
+            string userSymbol = Console.ReadLine();
+            Uzytkownik user = subiekt.Uzytkownicy.Wczytaj(userSymbol);
+            SuDokument fs = subiekt.Dokumenty.Wczytaj(fzSymbol) ?? throw new Exception($"FZ with symbol: {fzSymbol} was not found.");
+            SuDokument correctionFs = subiekt.SuDokumentyManager.DodajKFS(); //Create a new FS correction document
+            correctionFs.NaPodstawie(fs.Identyfikator); //Set the correction document based on the original FS document
+            correctionFs.Wystawil = user.Identyfikator; //Set the user who issued the document
+            while (true)
+            {
+                Console.WriteLine("Enter the symbol of the product to add to the correction FS or type 'exit' to finish:");
+                string symbol = Console.ReadLine();
+                if (symbol == "exit")
+                {
+                    break;
+                }
+                SuPozycja item = correctionFs.Pozycje.Wczytaj(symbol); //Read item by symbol
+                if (item is null)
+                {
+                    Console.WriteLine("Invalid item symbol.");
+                    continue;
+                }
+                Console.WriteLine("Do you want to change it net price? yes or no?");
+                var wantToChangeNetPrice = Console.ReadLine().ToLower();
+                if(wantToChangeNetPrice == "yes")
+                {
+                    Console.WriteLine("Enter new net price for the product:");
+                    if (!decimal.TryParse(Console.ReadLine(), out decimal newNetPrice) || newNetPrice <= 0)
+                    {
+                        Console.WriteLine("Invalid net price. Please enter a positive decimal number.");
+                        continue;
+                    }
+                    item.CenaNettoPrzedRabatem = newNetPrice; //Set new net price for the item
+                }
+                Console.WriteLine("Do you want to change it quantity? yes or no?");
+                var wantToChangeQuantity = Console.ReadLine().ToLower();
+                if (wantToChangeQuantity == "yes")
+                {
+                    Console.WriteLine("Enter new quantity for the product:");
+                    if (!int.TryParse(Console.ReadLine(), out int newQuantity) || newQuantity <= 0)
+                    {
+                        Console.WriteLine("Invalid quantity. Please enter a positive integer.");
+                        continue;
+                    }
+                    item.IloscJm = newQuantity; //Set new quantity for the item
+                }
+            }
+            correctionFs.Zapisz(); //Save the correction document
+            Console.WriteLine("FS correction document created successfully.");
+        }
         static void DeleteZk(Subiekt subiekt)
         {
             Console.WriteLine("Enter the ID of the sales invoice (ZK, PS, FS) to delete:");
